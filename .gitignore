@@ -2,7 +2,6 @@
 *.pyc
 *.dat
 __pycache__/*
-/open_worm_analysis_toolbox/user_config.py
 build/*
 dist/*
 deep_rectifiers.egg*
