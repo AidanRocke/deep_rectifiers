@@ -87,9 +87,9 @@ def binary_activity(models_file_path,num_layers,width,X):
     N, M = np.shape(X)
     epochs = len(models)
     
-    mean_activity = np.zeros((epochs,N,num_layers-1))
+    mean_activity = np.zeros((epochs,N,num_layers))
     
-    activity = np.zeros((epochs,N,width*(num_layers-1)))
+    activity = np.zeros((epochs,N,width*(num_layers)))
     
     
 
@@ -110,7 +110,7 @@ def binary_activity(models_file_path,num_layers,width,X):
                     
     return activity, mean_activity
 
-def subset_variable_size(classes,X_train, X_test, y_train,y_test):
+def subset_variable_size(classes,model,width,X_train, X_test, y_train,y_test):
     """
         input: 
             classes (list): a list of integers specifying classes
@@ -138,19 +138,18 @@ def subset_variable_size(classes,X_train, X_test, y_train,y_test):
     
     y_train, y_test = y_train[c2], y_test[c2]
     
-    #we create a model:
-    model = create_model([784,500,500,500,10],0,0, 0,'relu','softmax','categorical_crossentropy','adam')
-    
     model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=10, batch_size=5000, verbose=2)
     
     N, M = np.shape(X_train)
     
-    activity = np.zeros((10,N,1500))
+    activity = np.zeros((N,1500))
     
-    for i in range(3):            
+    n = len(model.layers)-1
+    
+    for i in range(n):            
             #get activations:
-            activations = np.array(get_activity(model, j, training_data) > 0,dtype=bool)
-            activity[i][:,range(j*width,(j+1)*width)] = activations
+            activations = np.array(get_activity(model, i, X_train) > 0,dtype=bool)
+            activity[:,range(i*width,(i+1)*width)] = activations
             
     return activity       
 
@@ -319,13 +318,5 @@ def node_heatmaps(activity,num_labels, labels,nodes_shared,sharing_activity):
     
     return Nodes_Shared, Node_Activity
 
-# small tests:
-"""
-nodes_shared = node_sharing(activity,10, y)
 
-sns.heatmap(nodes_shared[0],cmap="Blues")
-
-#if I didn't normalise the matrix, I could 
-plt.plot(np.diagonal(nodes_shared[4]))
-"""
     
