@@ -137,17 +137,4 @@ def cov_ratio(matrix):
         Z[k] = np.random.normal(loc = np.mean(500*matrix), scale = np.var(500*matrix), size = 500)
     
     return float(ortho(500*matrix))/float(ortho(Z))
-
-Z = np.zeros((500,500))
-            
-for k in range(500):
-    Z[k] = np.random.normal(loc = np.mean(500*W1), scale = np.var(500*W1), size = 500)
-    
-
-ortho(W1*500)
-
-for i in range()
-
-pca = PCA(n_components=10)
-
     
