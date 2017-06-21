@@ -45,7 +45,7 @@ def get_activity(model, layer, X):
 def percent_active(activations):
     """
         input:
-            activations (numpy.ndarray): a multidimensional boolean array of 
+            activations (numpy.ndarray): a multidimensional array of binary
                                          activations
                                          
         output:
@@ -75,8 +75,8 @@ def binary_activity(models_file_path,num_layers,width,X):
             X (numpy.ndarray) : samples that can be fed to a model
             
         output: 
-            activity (numpy.ndarray) : a binary multidimensional array representing 
-                                       activations per sample
+            activity (numpy.ndarray) : a multidimensional array representing 
+                                       binary activations per sample
             
             mean_activity (numpy.ndarray) : the fraction of nodes active per sample
     """
@@ -124,7 +124,8 @@ def subset_variable_size(classes,X_train, X_test, y_train,y_test):
             y_test (numpy.ndarray) : test labels
             
         output: 
-            
+            activity (numpy.ndarray) : a multidimensional array representing 
+                                       binary activations per sample
     """
     #get conditions by obtaining boolean array:
     c1, c2  = np.array([y_train == i for i in classes])+0, np.array([y_test == i for i in classes])+0 
@@ -155,7 +156,18 @@ def subset_variable_size(classes,X_train, X_test, y_train,y_test):
 
 def activation_map(activity,labels,epoch):
     """
-        
+
+        input: 
+            activity (numpy.ndarray) : a multidimensional array representing 
+                                       binary activations per sample
+
+            labels (numpy.ndarray) : the target label for each sample 
+
+             epoch (int) : a version of a model at an epoch in its training history
+
+        output: 
+
+            diff (numpy.ndarray): a map of the average euclidean distance in activation space
     
     """
 
@@ -178,6 +190,10 @@ def activation_map(activity,labels,epoch):
 
 #apply PCA before clustering:
 def visualize_mean_activity(mean_activity):
+    """
+        Visualization of sparsity of each hidden layer's activity using histograms 
+        for each epoch. 
+    """
     
     epochs, samples, layers = np.shape(mean_activity)
     
@@ -199,13 +215,19 @@ def visualize_mean_activity(mean_activity):
     plt.show()
     
     
-def variable_size_representation(mean_activity,Y_train):
+def variable_size_representation(mean_activity,labels):
+    """
+        A table ranking 'variable size' using the average number of active nodes for each class. 
+
+        input:
+            mean_activity (numpy.ndarray): the fraction of nodes active per sample
+    """
         
     global_activity = np.mean(mean_activity[len(mean_activity)-1],1)
     
     N= len(global_activity)
     
-    activity = pd.DataFrame(data = np.hstack((global_activity.reshape((N,1)),Y_train.reshape((N,1)))),columns=['fraction_active', 'label']) 
+    activity = pd.DataFrame(data = np.hstack((global_activity.reshape((N,1)),labels.reshape((N,1)))),columns=['fraction_active', 'label']) 
     
     variable_size = []
 
@@ -226,9 +248,12 @@ def variable_size_representation(mean_activity,Y_train):
     
     
 
-def visualize_activations(activation_data,labels):
+def visualize_activations(activity,labels):
+    """
+        Two dimensional linear embedding of binary activity. 
+    """
     pca = PCA(n_components=2)
-    pca_result = pca.fit_transform(activation_data)
+    pca_result = pca.fit_transform(activity)
 
 
     plt.style.use('ggplot')
