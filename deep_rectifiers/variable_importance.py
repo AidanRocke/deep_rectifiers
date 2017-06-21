@@ -34,30 +34,3 @@ def classification_importance(trained_model,validate_X,validate_Y):
         importance[i] = 1 - np.mean(np.round(trained_model.predict(Xhat)) == Y)
         
     return importance
-
-#for regression it might be a better idea to simply backpropagate:
-
-def regression_importance(trained_model,validate_X,validate_Y):
-    
-    preds = trained_model.predict(validate_X)
-    
-    X = validate_X
-    
-    N, M = np.shape(validate_X)
-    
-    importance = np.zeros(M)
-    
-    for i in range(M):
-        
-        mu = np.mean(X[:,i])
-        sigma = np.std(X[:,i])
-        
-        Xhat = X
-        
-        Xhat[:,i] = np.random.normal(mu,sigma)
-        
-        new_preds = trained_model.predict(Xhat)
-        
-        importance[i] = np.linalg.norm(preds-new_preds)
-        
-    return importance
