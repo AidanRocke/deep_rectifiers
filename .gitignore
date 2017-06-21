@@ -2,7 +2,6 @@
 *.pyc
 *.dat
 __pycache__/*
-build/*
-dist/*
-deep_rectifiers.egg*
-.pypirc	
+/build/*
+/dist/*
+/*.egg-info
