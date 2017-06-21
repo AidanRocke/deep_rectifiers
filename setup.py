@@ -70,10 +70,6 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
-        'sklearn == 0.18.1',
-        'numpy == 1.12.1',
-        'matplotlib == 2.0.0',
-        'scipy == 0.19.0',
         'keras == 2.0.3', 
         'pandas == 0.19.2',
         'seaborn == 0.7.1'],

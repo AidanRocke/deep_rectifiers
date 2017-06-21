@@ -8,7 +8,13 @@ Created on Fri May 19 23:26:05 2017
 
 import numpy as np
 
-def classification_importance(trained_model,validate_X,validate_Y):
+def variable_importance(trained_model,validate_X,validate_Y):
+    """
+        A method for calculating variable importance by introducing Gaussian noise. 
+
+        trained_model
+
+    """
     
     yhat = np.round(trained_model.predict(validate_X))
     
