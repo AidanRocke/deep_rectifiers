@@ -12,7 +12,8 @@ def variable_importance(trained_model,validate_X,validate_Y):
     """
         A method for calculating variable importance by introducing Gaussian noise. 
 
-        trained_model
+        input:
+            trained_model
 
     """
     
