@@ -13,29 +13,6 @@ from keras import regularizers
 from keras.models import Sequential
 #from keras.optimizers import adam
 from keras.layers.normalization import BatchNormalization
-from keras.optimizers import Adam, RMSprop
-from sklearn.model_selection import train_test_split
-
-from scipy.stats import pearsonr
-
-
-#what's in here:
-# 1. create_model
-# 2. load_model
-# 3. feature_selection
-
-def pearson_matrix(X):
-    
-    N = min(np.shape(X))
-    
-    corr = np.zeros((N,N))
-    
-    for i in range(N):
-        for j in range(N):
-            corr[i][j] = pearsonr(X[:,i],X[:,j])[0]
-            
-    return corr
-
 
 def create_model(layers,dropout,regularization, batch_norm,activation,output,loss,optimizer):
     """
@@ -44,8 +21,6 @@ def create_model(layers,dropout,regularization, batch_norm,activation,output,los
             layers: a list of layers of the neural network // list
             
             dropout: dropout ratio applied to each layer // float
-            
-            regularization: whether or not to regularize // binary
             
             batch_norm: binary, whether there's dropout or not // int
             
@@ -61,21 +36,12 @@ def create_model(layers,dropout,regularization, batch_norm,activation,output,los
     N = len(layers)
     
     model = Sequential()
-    
-    
-    
-    if regularization == 1:
-        
-        model.add(Dense(units= layers[1],input_dim=layers[0], use_bias=True,kernel_regularizer=regularizers.l2(0.01), kernel_initializer="uniform", activation=activation))
 
-    else: 
-        model.add(Dense(units= layers[1],input_dim=layers[0], use_bias=True,kernel_initializer="uniform", activation=activation))
+    model.add(Dense(units= layers[1],input_dim=layers[0], use_bias=True,kernel_initializer="uniform", activation=activation))
     
     for i in range(1,N-2):
-        if regularization == 1:
-            model.add(Dense(units= layers[i+1],use_bias=True,kernel_regularizer=regularizers.l2(0.01),kernel_initializer="uniform", activation=activation))
-        else: 
-            model.add(Dense(units= layers[i+1],use_bias=True,kernel_initializer="uniform", activation=activation))
+        
+        model.add(Dense(units= layers[i+1],use_bias=True,kernel_initializer="uniform", activation=activation))
         
         if batch_norm == 1:
             model.add(BatchNormalization())
