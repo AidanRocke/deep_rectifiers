@@ -6,12 +6,9 @@ Created on Thu Apr 27 11:58:37 2017
 @author: aidanrocke
 """
 
-import numpy as np
-import pandas as pd
 from keras.layers.core import Dense, Dropout
 from keras import regularizers
 from keras.models import Sequential
-#from keras.optimizers import adam
 from keras.layers.normalization import BatchNormalization
 
 def create_model(layers,dropout,regularization, batch_norm,activation,output,loss,optimizer):
