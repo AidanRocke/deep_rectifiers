@@ -1,4 +1,4 @@
-Tools for analysing deep recitifier networks
+Tools for analysing deep rectifier networks
 ============================================
 
 A set of tools for analysing deep fully-connected recitifer networks i.e. networks with ReLU activation. Specific tools include methods for experimental
