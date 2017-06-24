@@ -13,10 +13,10 @@ from scipy.stats import entropy
 from keras.models import load_model
 import os
 import pandas as pd
+from keras.utils import np_utils
 
 from scipy.stats import rankdata
 from sklearn.decomposition import PCA
-from sklearn.cluster import KMeans
 import matplotlib.cm as cm
 
 """
@@ -31,11 +31,14 @@ class Activations:
         self.file_path = models_file_path
         self.num_layers = num_layers
         self.width = width
+        self.models = [load_model(self.file_path+model) for model in os.listdir(self.file_path) if model.endswith('.h5')]
         self.X_train, self.X_test = Data[0], Data[1]
-        self.y_train, self.y_test = Data[2], Data[3]
-        self.num_labels = len(set(self.y_train))
+        self.train_labels, self.test_labels = Data[2], Data[3]
+        self.y_train, self.y_test = np_utils.to_categorical(self.train_labels), np_utils.to_categorical(self.test_labels)
+        
+        self.num_labels = len(set(self.train_labels))
 
-    def get_activity(self,model, layer):
+    def get_activity(X_train,model, layer):
         """
             input: 
                 model (keras.models.Sequential) : a Keras sequential model 
@@ -49,7 +52,7 @@ class Activations:
         layer = model.layers[layer]
         layer_model = Model(inputs=model.input,outputs=layer.output)
         
-        return layer_model.predict(self.X)
+        return layer_model.predict(X_train)
 
     def percent_active(activations):
         """
@@ -91,10 +94,9 @@ class Activations:
         """
         
         #load models:
-        models = [model for model in os.listdir(self.file_path) if model.endswith('.h5')]
             
         N, M = np.shape(self.X)
-        epochs = len(models)
+        epochs = len(self.models)
         
         mean_activity = np.zeros((epochs,N,self.num_layers))
         
@@ -104,7 +106,7 @@ class Activations:
 
         for i in range(epochs):
       
-            model = load_model(self.file_path+models[i])
+            model = self.models[i]
             
             
             for j in range(self.num_layers):            
@@ -120,7 +122,7 @@ class Activations:
         return activity, mean_activity
     
     
-    def variable_size_representation(self,classes,model):
+    def variable_size_representation(self,subclasses,model):
         """
             input: 
                 classes (list): a list of integers specifying classes
@@ -131,17 +133,21 @@ class Activations:
                 rankings (Dataframe) : a multidimensional array representing 
                                            binary activations per sample
         """
-        #get conditions by obtaining boolean array:
-        ix1, ix2  = np.array([self.y_train == i for i in classes])+0, np.array([self.y_test == i for i in classes])+0 
+        #one-hot encode the classes:
         
-        ix1, ix2 = np.array([np.max(ix1[:,i]) for i in range(len(ix1))]), np.array([np.max(ix2[:,i]) for i in range(len(ix2))])
+        classes  = np_utils.to_categorical(np.arange(10))
+        encoded_subclasses = classes[[subclasses]]
         
+        #get indices by obtaining boolean array:
+        ix1, ix2  = np.array([np.mean(self.y_train == i,1)== 1.0 for i in encoded_subclasses])+0, np.array([np.mean(self.y_test == i,1)== 1.0 for i in encoded_subclasses]) 
+        
+        ix1, ix2 = np.array([np.max(ix1[:,i]) for i in range(np.max(np.shape(ix1)))],dtype=bool), np.array([np.max(ix2[:,i]) for i in range(np.max(np.shape(ix2)))],dtype=bool)
         
         #let's subset our training data:
-        X_train, y_train = self.X_train[ix1], self.y_train[ix1]
+        X_train, y_train, train_labels = self.X_train[ix1], self.y_train[ix1], self.train_labels[ix1]
         
-        X_test, y_test = self.X_train[ix2], self.y_test[ix2]
-        
+        X_test, y_test= self.X_test[ix2], self.y_test[ix2]
+                
         model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=10, batch_size=5000, verbose=2)
         
         
@@ -152,7 +158,7 @@ class Activations:
         
         for i in range(self.num_layers):            
                 #get activations:
-                activations = np.array(Activations.get_activity(model, i, X_train) > 0,dtype=bool)
+                activations = np.array(Activations.get_activity(X_train,model, i) > 0,dtype=bool)
                 
                 layer_values = np.array(activations > 0,dtype=bool)
                 
@@ -160,20 +166,15 @@ class Activations:
                 
         #rank the variable sizes:
         mean_activity = np.mean(activity_per_layer,1)
-        
-        activity = pd.DataFrame(data = np.hstack((mean_activity.reshape((N,1)),y_train.reshape((N,1)))),columns=['fraction_active', 'label']) 
-        
-        variable_size = []
+                
+        variable_size = np.zeros(len(subclasses))
 
-        for i in classes:
-            act = activity.loc[activity['label'] == i]
-            variable_size.append(act.fraction_active.values)
-    
-        average_values = np.array([np.mean(K) for K in variable_size])    
+        for i in range(len(subclasses)):
+            variable_size[i] = np.mean(mean_activity[train_labels == subclasses[i]])
+            
+        ranks = rankdata(variable_size)
         
-        ranks = rankdata(average_values)
-        
-        rankings = pd.DataFrame(data = ranks.reshape((1,len(classes))), index = ['variable_size'], columns=['rank of '+str(i) for i in range(10)]) #creates a new dataframe that's empty
+        rankings = pd.DataFrame(data = ranks.reshape((1,len(subclasses))), index = ['variable_size'], columns=['rank of '+str(i) for i in subclasses]) #creates a new dataframe that's empty
     
         return rankings
     

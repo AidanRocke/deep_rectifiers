@@ -14,7 +14,7 @@ class Weights:
     def __init__(self,models_file_path,num_layers):
         self.file_path = models_file_path
         self.num_layers = num_layers
-        self.models = [model for model in os.listdir(self.file_path) if model.endswith('.h5')]
+        self.models = [load_model(self.file_path+model) for model in os.listdir(self.file_path) if model.endswith('.h5')]
 
     def ortho(matrix):
             
