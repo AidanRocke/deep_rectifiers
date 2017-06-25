@@ -9,6 +9,8 @@ Created on Sat Jun 24 20:50:13 2017
 from keras.layers.core import Dense, Dropout
 from keras.models import Sequential
 from keras.layers.normalization import BatchNormalization
+from keras.datasets import mnist
+from keras.utils import np_utils
 
 from scipy.stats import mode
 import numpy as np
@@ -67,5 +69,35 @@ def create_model(layers,dropout,regularization, batch_norm,activation,output,los
     
     return model
 
+def load_mnist():
+    (X_train, y_train), (X_test, y_test) = mnist.load_data()
+
+    train_labels = y_train
+    test_labels = y_test
+    
+    # flatten 28*28 images to a 784 vector for each image
+    num_pixels = X_train.shape[1] * X_train.shape[2]
+    X_train = X_train.reshape(X_train.shape[0], num_pixels).astype('float32')
+    X_test = X_test.reshape(X_test.shape[0], num_pixels).astype('float32')
+    
+    # normalize inputs from 0-255 to 0-1
+    X_train = X_train / 255
+    X_test = X_test / 255
+    
+    # one hot encode outputs
+    y_train = np_utils.to_categorical(y_train)
+    y_test = np_utils.to_categorical(y_test)
+    
+    Data = [X_train,X_test,y_train,y_test]
+    
+    labels = [train_labels,test_labels]
+    
+    return Data, labels
         
-        
+def train_model(model,data,epoch,path):
+    
+    X_train, X_test, y_train, y_test = data[0], data[1], data[2], data[3]
+    
+    model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=1, batch_size=1000, verbose=2)
+    
+    model.save(path+str(epoch)+'.h5')

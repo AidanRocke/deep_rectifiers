@@ -8,7 +8,7 @@ Created on Mon Jun  5 03:43:34 2017
 
 import numpy as np
 import os 
-
+from keras.models import load_model
 
 class Weights:
     def __init__(self,models_file_path,num_layers):
@@ -48,40 +48,40 @@ class Weights:
             
         return np.mean(random), np.var(random), random
 
-#now let's analyse whether there is convergence:
-    
-def analyse_convergence(self):
-
-    num_models = len(self.models)
-    
-    for i in range(num_models):
+    #now let's analyse whether there is convergence:
         
-        model = self.models[i]
+    def analyse_convergence(self):
+    
+        num_models = len(self.models)
+        
+        for i in range(num_models):
+            
+            model = self.models[i]
+                    
+            scores = np.zeros((num_models,self.num_layers))
+            
+            layers = [model.layers[i] for i in range(self.num_layers)]
+            
+            weights = []
+            
+            for j in range(self.num_layers):
+            
+                layer = layers[j]
                 
-        scores = np.zeros((num_models,self.num_layers))
-        
-        layers = [model.layers[i] for i in range(self.num_layers)]
-        
-        weights = []
-        
-        for j in range(self.num_layers):
-        
-            layer = layers[j]
+                W_matrix = layer.get_weights()[0]
+                
+                #initialise_control matrix:
+                Z = np.zeros((500,500))
             
-            W_matrix = layer.get_weights()[0]
+                for k in range(500):
+                    Z[k] = np.random.normal(loc = np.mean(500*W_matrix), scale = np.var(500*W_matrix), size = 500)
+                
+                weights.append(float(Weights.ortho(500*W_matrix))/float(Weights.ortho(Z)))
             
-            #initialise_control matrix:
-            Z = np.zeros((500,500))
+            scores[i] = np.array(weights)
         
-            for k in range(500):
-                Z[k] = np.random.normal(loc = np.mean(500*W_matrix), scale = np.var(500*W_matrix), size = 500)
-            
-            weights.append(float(Weights.ortho(500*W_matrix))/float(Weights.ortho(Z)))
         
-        scores[i] = np.array(weights)
-    
-    
-    return scores
+        return scores
 
     def get_weights(model):
         K = len(model.layers)
@@ -100,11 +100,13 @@ def analyse_convergence(self):
         
         N = len(self.models)
         
+        weights = np.zeros(N)
+        
         #get weights for each model:
         for i in range(N):
             model = self.models[i]
             
-            W = get_weights(model)
+            W = Weights.get_weights(model)
         
             weights[i] = np.mean([np.linalg.norm(x[0]) for x in W])
             

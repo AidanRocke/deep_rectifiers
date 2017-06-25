@@ -27,14 +27,14 @@ from utils import *
 """
 
 class Activations:
-    def __init__(self,models_file_path,num_layers,width,Data):
+    def __init__(self,models_file_path,num_layers,width,data,labels):
         self.file_path = models_file_path
         self.num_layers = num_layers
         self.width = width
         self.models = [load_model(self.file_path+model) for model in os.listdir(self.file_path) if model.endswith('.h5')]
-        self.X_train, self.X_test = Data[0], Data[1]
-        self.train_labels, self.test_labels = Data[2], Data[3]
-        self.y_train, self.y_test = np_utils.to_categorical(self.train_labels), np_utils.to_categorical(self.test_labels)
+        self.X_train, self.X_test = data[0], data[1]
+        self.train_labels, self.test_labels = labels[0], labels[1]
+        self.y_train, self.y_test = data[2], data[3]
         
         self.num_labels = len(set(self.train_labels))
 
@@ -95,7 +95,7 @@ class Activations:
         
         #load models:
             
-        N, M = np.shape(self.X)
+        N, M = np.shape(self.X_train)
         epochs = len(self.models)
         
         mean_activity = np.zeros((epochs,N,self.num_layers))
@@ -111,7 +111,7 @@ class Activations:
             
             for j in range(self.num_layers):            
                 #get activations:
-                activations = np.array(Activations.get_activity(model, j, self.X) > 0,dtype=bool)
+                activations = np.array(Activations.get_activity(self.X_train,model,j) > 0,dtype=bool)
                 activity[i][:,range(j*self.width,(j+1)*self.width)] = activations
                 
                 layer_values = np.array(activations > 0,dtype=bool)
@@ -196,7 +196,7 @@ class Activations:
     
         #, sharey=True
     
-        scat = ax.scatter(pca_result[:,0],pca_result[:,1], c=self.y_train,cmap=cm.Set3)
+        scat = ax.scatter(pca_result[:,0],pca_result[:,1], c=self.train_labels,cmap=cm.Set3)
         ax.set_title('PCA activation clusters',fontsize=15)
         ax.set_facecolor('bisque')
     
@@ -217,16 +217,29 @@ class Activations:
         f, ax = plt.subplots(layers, epochs,figsize=(20,20))
         
         plt.style.use('ggplot')
+        
+        if layers > 1:
     
     
-        for i in range(epochs):
-            for j in range(layers):
-                
-                ent = entropy(mean_activity[i][:,j],mean_activity[epochs-1][:,j])
-                ax[j,i].hist(mean_activity[i][:,j],color='steelblue',label='entropy = '+str(ent))
-                ax[j,i].set_title('epoch '+str(i+1)+'_layer '+str(j+1))
-                
-                ax[j,i].legend(loc='upper left')
+            for i in range(epochs):
+                for j in range(layers):
+                    
+                    ent = entropy(mean_activity[i][:,j],mean_activity[epochs-1][:,j])
+                    ax[j,i].hist(mean_activity[i][:,j],color='steelblue',label='entropy = '+str(ent))
+                    ax[j,i].set_title('epoch '+str(i+1)+'_layer '+str(j+1))
+                    
+                    ax[j,i].legend(loc='upper left')
+                    
+        else:
+            for i in range(epochs):
+                for j in range(layers):
+                    
+                    ent = entropy(mean_activity[i][:,j],mean_activity[epochs-1][:,j])
+                    ax[i].hist(mean_activity[i][:,j],color='steelblue',label='entropy = '+str(ent))
+                    ax[i].set_title('epoch '+str(i+1)+'_layer '+str(j+1))
+                    
+                    ax[i].legend(loc='upper left')
+            
     
         plt.show()
         
@@ -253,11 +266,11 @@ class Activations:
         
         for i in range(10):
             
-            avg = np.mean(act[np.where(self.X_train == i)],0)
+            avg = np.mean(act[np.where(self.train_labels == i)],0)
         
             for j in range(10):
             
-                delta = act[np.where(self.y_train == j)] - avg
+                delta = act[np.where(self.train_labels == j)] - avg
                 
                 diff[i][j] = np.mean([np.linalg.norm(k) for k in delta])
                 
@@ -294,9 +307,4 @@ class Activations:
                 nodes_shared[i,j] = np.array([len(set.intersection(nodes_used[j],nodes_used[k])) for k in range (num_labels)])/float(len(nodes_used[j]))
                 
         return nodes_shared     
-    
-    
-    
-    
-    
     
