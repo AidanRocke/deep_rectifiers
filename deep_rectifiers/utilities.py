@@ -1,15 +1,30 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Apr 27 11:58:37 2017
+Created on Sat Jun 24 20:50:13 2017
 
 @author: aidanrocke
 """
 
 from keras.layers.core import Dense, Dropout
-from keras import regularizers
 from keras.models import Sequential
 from keras.layers.normalization import BatchNormalization
+
+from scipy.stats import mode
+import numpy as np
+
+def ranking_stats(rankings):
+    
+    #get the mean, mode and variance
+    
+    stats = np.zeros((3,len(rankings)))
+    
+    for i in range(len(rankings)):
+        stats[:,i][0] = mode(rankings[:,i])
+        stats[:,i][1] = np.mean(rankings[:,i])
+        stats[:,i][2] = np.var(rankings[:,i])
+        
+    return stats
 
 def create_model(layers,dropout,regularization, batch_norm,activation,output,loss,optimizer):
     """
@@ -43,11 +58,14 @@ def create_model(layers,dropout,regularization, batch_norm,activation,output,los
         if batch_norm == 1:
             model.add(BatchNormalization())
         
-
-        #model.add(Dropout(dropout))
+        if dropout != 0:
+            model.add(Dropout(dropout))
         
     model.add(Dense(units=layers[N-1],use_bias=True,kernel_initializer="normal", activation=output))
     
     model.compile(loss=loss, optimizer=optimizer,metrics=['accuracy'])
     
     return model
+
+        
+        
